@@ -17,6 +17,7 @@ from config import settings
 from services.bxtrender_strategy import BXtrenderState
 from services.candles import CandleAggregator
 from services.instruments import resolve_nifty_fut_symbol, resolve_spot_atm_ce_pe
+from services.market_hours import session_status
 from services.qty import resolve_order_qty
 from services.quotes import get_ltp
 from services.ticker import tick_stream
@@ -217,6 +218,10 @@ class PaperFuturesDesk:
             "last_ltp": self._last_ltp,
             "last_tick_time": self._last_tick_time,
             "error": self._error,
+            "warmup_bars": max((book.warmup_bars for book in self._books), default=0),
+            "hold_seconds": float(settings.FUT_SIGNAL_HOLD_SECONDS),
+            "stop_points": float(settings.FUT_STOP_POINTS),
+            "market": session_status(),
             "modes": [book.mode for book in self._books],
             "indicators": [self._book_public(book) for book in self._books],
         }

@@ -76,6 +76,20 @@
     th { color: var(--muted); font-size: 0.72rem; letter-spacing: 0.03em; text-transform: uppercase; }
     .empty { color: var(--muted); padding: 8px 0; }
     .scroll { overflow: auto; }
+    .banner { border-left: 4px solid var(--muted); }
+    .banner.open { border-left-color: var(--good); background: #f4fbf7; }
+    .banner.closed { border-left-color: #b5812b; background: #fff8ee; }
+    .banner-top { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: center; }
+    .banner p { margin: 8px 0 0; }
+    .banner .note { color: var(--muted); }
+    .pill.closed { background: #fff1d6; color: #8a5a10; }
+    .facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 14px; }
+    @media (max-width: 980px) { .facts { grid-template-columns: 1fr 1fr; } }
+    .fact { background: var(--bg); border-radius: 8px; padding: 8px 10px; }
+    .fact .v { margin-top: 2px; font-weight: 700; word-break: break-word; }
+    .combined { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: baseline; }
+    .combined .v { font-size: 1.35rem; font-weight: 750; }
+    .meta { display: flex; gap: 14px 18px; flex-wrap: wrap; margin-top: 8px; color: var(--muted); font-size: 0.86rem; }
   </style>
 </head>
 <body>
@@ -99,14 +113,32 @@
     <div id="msg" class="msg"></div>
   </section>
 
+  <section class="card" id="marketCard">
+    <div class="banner-top">
+      <span class="pill" id="marketPill">Checking session…</span>
+      <span id="marketClock" class="label"></span>
+    </div>
+    <p id="marketDetail"></p>
+    <p id="marketNext" class="note"></p>
+    <p id="marketArmed" class="note"></p>
+    <p id="marketLogin" class="note"></p>
+  </section>
+
   <section class="card">
     <div class="contract">
       <span class="pill" id="runPill">Stopped</span>
-      <span>Futures <strong id="futSym">—</strong></span>
-      <span>Spot <strong id="spot">—</strong></span>
-      <span>Strike <strong id="strike">—</strong></span>
-      <span>Call <strong id="ceSym">—</strong></span>
-      <span>Put <strong id="peSym">—</strong></span>
+      <span id="sessionLine">NSE cash session 09:15–15:30 IST, Monday to Friday. Paper only.</span>
+    </div>
+    <div class="facts" id="facts"></div>
+  </section>
+
+  <section class="card">
+    <div class="combined">
+      <div>
+        <div class="label">Both indicators</div>
+        <div>Closed profit plus the open mark on each book.</div>
+      </div>
+      <div class="v" id="combinedTotal">0.00</div>
     </div>
   </section>
 
@@ -180,17 +212,51 @@
       </tr>`).join("");
     }
 
+    function fact(label, value) {
+      return `<div class="fact"><div class="label">${escapeHtml(label)}</div><div class="v">${value}</div></div>`;
+    }
+
+    function renderMarket(market, running) {
+      const m = market || {};
+      const open = !!m.open;
+      const card = document.getElementById("marketCard");
+      card.className = "card banner " + (open ? "open" : "closed");
+      const pill = document.getElementById("marketPill");
+      pill.textContent = m.label || "Session";
+      pill.className = "pill " + (open ? "run" : "closed");
+      document.getElementById("marketClock").textContent = m.now_ist || "";
+      document.getElementById("marketDetail").textContent = m.detail || "";
+      document.getElementById("marketNext").textContent = m.next_open
+        ? "Next open: " + m.next_open
+        : (m.closes ? "Session ends " + m.closes : "");
+      document.getElementById("marketArmed").textContent = running && !open ? (m.armed_note || "") : "";
+      document.getElementById("marketLogin").textContent = open ? "" : (m.login_note || "");
+      if (m.session) document.getElementById("sessionLine").textContent = m.session + ". Paper only. Nothing is sent to a broker.";
+    }
+
     function render(status) {
       const s = status || {};
       const atm = s.resolved_atm || {};
       const running = !!s.running;
+      renderMarket(s.market, running);
       document.getElementById("runPill").textContent = running ? "Practicing" : "Stopped";
       document.getElementById("runPill").className = "pill" + (running ? " run" : "");
-      document.getElementById("futSym").textContent = s.fut_symbol || "—";
-      document.getElementById("spot").textContent = atm.spot != null ? inr(atm.spot) : "—";
-      document.getElementById("strike").textContent = atm.strike != null ? atm.strike : "—";
-      document.getElementById("ceSym").textContent = s.ce_symbol || "—";
-      document.getElementById("peSym").textContent = s.pe_symbol || "—";
+      const stopWord = s.stop_points != null ? String(s.stop_points) : "15";
+      const holdWord = s.hold_seconds != null ? String(s.hold_seconds) : "15";
+      document.getElementById("facts").innerHTML = [
+        fact("Futures", escapeHtml(s.fut_symbol || "—")),
+        fact("Futures last", s.last_ltp != null ? inr(s.last_ltp) : "—"),
+        fact("Last tick", escapeHtml(s.last_tick_time || "No tick yet")),
+        fact("Spot at Start", atm.spot != null ? inr(atm.spot) : "—"),
+        fact("Strike", atm.strike != null ? escapeHtml(String(atm.strike)) : "—"),
+        fact("Call", escapeHtml(s.ce_symbol || "—") + (atm.ce_ltp != null ? " @ " + inr(atm.ce_ltp) : "")),
+        fact("Put", escapeHtml(s.pe_symbol || "—") + (atm.pe_ltp != null ? " @ " + inr(atm.pe_ltp) : "")),
+        fact("Quantity", s.qty ? escapeHtml(String(s.qty)) : "—"),
+        fact("Signal hold", escapeHtml(holdWord) + " seconds"),
+        fact("Futures stop", escapeHtml(stopWord) + " points"),
+        fact("Warm-up bars", s.warmup_bars ? escapeHtml(String(s.warmup_bars)) : "—"),
+        fact("Premiums", escapeHtml(atm.premium_note || "Locked when you press Start")),
+      ].join("");
       document.getElementById("btnStart").disabled = running;
       document.getElementById("btnStop").disabled = !running;
       if (running && (s.modes || []).length) {
@@ -206,6 +272,10 @@
       const cards = document.getElementById("cards");
       const rows = s.indicators || [];
       const prev = [...cards.querySelectorAll(".scroll")].map(el => el.scrollTop);
+      const combined = rows.reduce((sum, row) => sum + Number((row.book || {}).total_pnl || 0), 0);
+      const totalEl = document.getElementById("combinedTotal");
+      totalEl.textContent = inr(combined);
+      totalEl.className = "v " + pnlClass(combined);
       if (!rows.length) {
         cards.innerHTML = '<section class="card"><p class="empty">Check the indicators, then press Start.</p></section>';
         return;
@@ -215,14 +285,21 @@
         const side = row.active_side === "ce" ? "Long call" : row.active_side === "pe" ? "Long put" : "No position";
         const unreal = book.unrealized_pnl;
         const unrealText = unreal == null ? (book.open_symbol ? "—" : "0.00") : inr(unreal);
+        const stopLine = row.stop_price != null
+          ? `Stop if futures ${row.active_side === "ce" ? "falls to" : "rises to"} ${inr(row.stop_price)}`
+          : "No futures stop until a fill";
         return `<section class="card">
           <div class="headrow">
             <div>
               <h2>${escapeHtml(row.label || "Indicator")}</h2>
               <div class="phase">${escapeHtml(row.phase || "")}</div>
-            ${row.stop_price != null ? `<div class="label">Stop if futures ${row.active_side === "ce" ? "≤" : "≥"} ${inr(row.stop_price)}</div>` : ""}
             </div>
             <div class="label">Signal ${escapeHtml(row.live_signal || "—")}</div>
+          </div>
+          <div class="meta">
+            <span>Last signal ${escapeHtml(row.last_signal || "—")}</span>
+            <span>Warm-up ${row.warmup_bars || 0} bars</span>
+            <span>${escapeHtml(stopLine)}</span>
           </div>
           <div class="stats">
             <div class="stat"><div class="label">Closed</div><div class="v ${pnlClass(Number(book.realized_pnl || 0))}">${inr(book.realized_pnl || 0)}</div></div>
