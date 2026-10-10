@@ -28,7 +28,7 @@ Set these as Space secrets, not in git:
 - `ZERODHA_API_KEY`
 - `ZERODHA_API_SECRET`
 - `ZERODHA_REDIRECT_URL` = `https://<your-space>.hf.space/api/v1/auth/callback`
-- `GROQ_API_KEY` so a pasted Pine script can be converted. Restart the Space after adding it.
+- `GROQAPIKEY` so a pasted Pine script can be converted. The Space name box allows only letters and numbers, so this name has no underscores. Restart the Space after adding it.
 
 On [developers.kite.trade](https://developers.kite.trade), set that same callback URL as the app redirect.
 

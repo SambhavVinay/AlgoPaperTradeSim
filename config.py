@@ -2,7 +2,7 @@
 
 import logging
 
-from pydantic import Field, field_validator
+from pydantic import AliasChoices, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 logging.basicConfig(
@@ -41,10 +41,14 @@ class Settings(BaseSettings):
     FUT_STOP_POINTS: float = Field(15.0, ge=0)
     TV_WEBHOOK_ENABLED: bool = Field(False)
 
-    GROQ_API_KEY: str = Field("", description="Optional. Converts pasted Pine Script. Set as a Space secret.")
+    GROQ_API_KEY: str = Field(
+        "",
+        validation_alias=AliasChoices("GROQ_API_KEY", "GROQAPIKEY"),
+        description="Optional. Converts pasted Pine Script. Space secret name is GROQAPIKEY.",
+    )
     GROQ_BASE_URL: str = Field("https://api.groq.com/openai/v1")
     GROQ_MODEL: str = Field("openai/gpt-oss-120b")
-    NVIDIA_API_KEY: str = Field("")
+    NVIDIA_API_KEY: str = Field("", validation_alias=AliasChoices("NVIDIA_API_KEY", "NVIDIAAPIKEY"))
     NVIDIA_BASE_URL: str = Field("https://integrate.api.nvidia.com/v1")
     NVIDIA_MODEL: str = Field("deepseek-ai/deepseek-v4.1-flash")
 

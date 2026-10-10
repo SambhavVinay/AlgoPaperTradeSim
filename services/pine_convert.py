@@ -178,7 +178,7 @@ def convert_pine_to_python(pine_source: str) -> dict[str, Any]:
         return {"ok": False, "error": "Pine Script is empty"}
     endpoints = _endpoints()
     if not endpoints:
-        return {"ok": False, "error": "No LLM key set. Add GROQ_API_KEY in the Space secrets."}
+        return {"ok": False, "error": "No LLM key set. Add a Space secret named GROQAPIKEY, then restart."}
     errors: list[str] = []
     for endpoint in endpoints:
         result = _chat(endpoint, pine)
