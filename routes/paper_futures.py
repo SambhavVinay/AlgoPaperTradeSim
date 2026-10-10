@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 
 from deps import get_kite_client
 from services.paper_futures import paper_futures_desk
+from services import custom_indicators
 
 router = APIRouter(prefix="/api/v1/paper/futures", tags=["paper-futures"])
 
@@ -17,9 +18,35 @@ class FuturesPaperStartBody(BaseModel):
     )
 
 
+class IndicatorBody(BaseModel):
+    name: str = ""
+    pine: str = ""
+    python: str = ""
+
+
 @router.get("/indicators", summary="Indicators the futures paper page can run")
 def futures_paper_indicators() -> dict:
     return {"ok": True, "indicators": paper_futures_desk.indicators()}
+
+
+@router.post("/indicators", summary="Convert a pasted Pine script into a checkbox")
+def futures_paper_add_indicator(body: IndicatorBody) -> dict:
+    if paper_futures_desk.running():
+        return {"ok": False, "error": "Stop the desk before adding an indicator"}
+    result = custom_indicators.add(body.name, body.pine, body.python)
+    if result.get("ok"):
+        result["indicators"] = paper_futures_desk.indicators()
+    return result
+
+
+@router.delete("/indicators/{mode}", summary="Remove a pasted indicator")
+def futures_paper_remove_indicator(mode: str) -> dict:
+    if paper_futures_desk.running():
+        return {"ok": False, "error": "Stop the desk before removing an indicator"}
+    result = custom_indicators.remove(mode.strip().lower())
+    if result.get("ok"):
+        result["indicators"] = paper_futures_desk.indicators()
+    return result
 
 
 @router.post("/start", summary="Start every checked indicator on one shared strike")

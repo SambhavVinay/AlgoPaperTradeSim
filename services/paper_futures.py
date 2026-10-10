@@ -6,6 +6,7 @@ Fills use the option last price. Nothing is sent to Kotak.
 
 from __future__ import annotations
 
+import copy
 import datetime
 import logging
 import threading
@@ -16,6 +17,7 @@ from kiteconnect import KiteConnect
 from config import settings
 from services.bxtrender_strategy import BXtrenderState
 from services.candles import CandleAggregator
+from services import custom_indicators
 from services.instruments import resolve_nifty_fut_symbol, resolve_spot_atm_ce_pe
 from services.market_hours import session_status
 from services.qty import resolve_order_qty
@@ -31,13 +33,19 @@ INDICATORS: list[dict[str, str]] = [
     {"id": "ut_bot_fut_cepe", "label": "UT Bot"},
     {"id": "bxtrender_fut_cepe", "label": "B-Xtrender"},
 ]
-_IDS = {row["id"] for row in INDICATORS}
 
 
 def _new_state(mode: str) -> Any:
     if mode.startswith("ut_bot"):
         return UTBotState()
-    return BXtrenderState()
+    if mode.startswith("bxtrender"):
+        return BXtrenderState()
+    return custom_indicators.new_state(mode)
+
+
+def _preview(state: Any, ltp: float) -> Optional[str]:
+    snap = state.snapshot() if hasattr(state, "snapshot") else copy.deepcopy(state)
+    return snap.process_candle(close=ltp)
 
 
 class _Book:
@@ -85,8 +93,10 @@ class PaperFuturesDesk:
         self._error: Optional[str] = None
         self._px_cache: dict[str, float] = {}
 
-    def indicators(self) -> list[dict[str, str]]:
-        return [dict(row) for row in INDICATORS]
+    def indicators(self) -> list[dict[str, Any]]:
+        rows = [{**row, "custom": False} for row in INDICATORS]
+        rows.extend(custom_indicators.list_public())
+        return rows
 
     def running(self) -> bool:
         with self._lock:
@@ -97,7 +107,8 @@ class PaperFuturesDesk:
         seen: set[str] = set()
         for raw in modes or []:
             mode = str(raw or "").strip().lower()
-            if mode in _IDS and mode not in seen:
+            known = {row["id"] for row in self.indicators()}
+            if mode in known and mode not in seen:
                 seen.add(mode)
                 chosen.append(mode)
         if not chosen:
@@ -127,7 +138,7 @@ class PaperFuturesDesk:
         pe_symbol = str(atm["pe_symbol"]).upper()
         qty = resolve_order_qty(tradingsymbol=ce_symbol, exchange="NFO")
 
-        labels = {row["id"]: row["label"] for row in INDICATORS}
+        labels = {row["id"]: row["label"] for row in self.indicators()}
         books = [_Book(mode, labels[mode]) for mode in chosen]
         for book in books:
             book.warmup_bars = warmup_from_history(
@@ -433,7 +444,7 @@ class PaperFuturesDesk:
         forming = aggregator.current_candle_start
         if forming is None:
             return
-        preview = book.state.snapshot().process_candle(close=ltp)
+        preview = _preview(book.state, ltp)
         hold_seconds = float(settings.FUT_SIGNAL_HOLD_SECONDS)
         now = datetime.datetime.now()
         with self._lock:

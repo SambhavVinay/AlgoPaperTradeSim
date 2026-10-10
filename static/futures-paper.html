@@ -6,109 +6,120 @@
   <title>Futures paper</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;700&amp;display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;family=Roboto+Mono:wght@400;500&amp;display=swap" rel="stylesheet" />
   <style>
     :root {
-      --sheet: #EEF2EF;
-      --ink: #1A2420;
-      --mute: #5E6B64;
-      --rule: #C9D4CE;
-      --open: #0F6E56;
-      --halt: #9A6B2F;
-      --loss: #A33B3B;
-      --panel: #F7F8F6;
+      --page: #f8f9fa;
+      --ink: #202124;
+      --mute: #5f6368;
+      --line: #dadce0;
+      --blue: #1a73e8;
+      --blue-dark: #1765cc;
+      --green: #188038;
+      --red: #d93025;
+      --warn-bg: #fef7e0;
+      --warn: #e37400;
+      --open-bg: #e6f4ea;
+      --card: #ffffff;
     }
     * { box-sizing: border-box; }
-    html { background: var(--sheet); }
+    html, body { margin: 0; background: var(--page); color: var(--ink); }
     body {
-      margin: 0;
-      color: var(--ink);
-      font-family: "Familjen Grotesk", "Segoe UI", sans-serif;
+      font-family: Roboto, Arial, sans-serif;
       font-variant-numeric: tabular-nums;
       line-height: 1.45;
     }
-    a { color: var(--open); }
-    button, input { font: inherit; }
-    :focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
-    .sheet { max-width: 1120px; margin: 0 auto; padding: 28px 22px 64px; }
-    header { display: flex; justify-content: space-between; gap: 16px; align-items: flex-end; }
-    h1 { margin: 0; font-size: 1.8rem; font-weight: 700; letter-spacing: -0.03em; }
-    .sub { margin: 6px 0 0; max-width: 38rem; color: var(--mute); }
-    .login {
-      text-decoration: none; color: var(--ink); border-bottom: 1px solid var(--ink);
-      padding-bottom: 2px; font-weight: 500;
+    button, input, textarea { font: inherit; color: inherit; }
+    :focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+    .topbar {
+      height: 64px; background: #fff; display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px; box-shadow: 0 1px 2px rgba(60, 64, 67, 0.3); position: sticky; top: 0; z-index: 2;
     }
-    .session { margin-top: 28px; padding-bottom: 22px; border-bottom: 1px solid var(--rule); }
-    .session-top { display: flex; justify-content: space-between; gap: 16px; align-items: baseline; }
-    .state { margin: 0; font-size: 1.7rem; font-weight: 700; letter-spacing: -0.03em; }
-    .state.closed { color: var(--halt); }
-    .state.open { color: var(--open); }
-    .clock { color: var(--mute); }
-    .detail, .note { margin: 8px 0 0; max-width: 42rem; }
-    .note { color: var(--mute); }
-    .rail { position: relative; height: 46px; margin-top: 18px; }
-    .rail-track { position: absolute; left: 0; right: 0; top: 18px; height: 2px; background: var(--rule); }
+    .brand { font-size: 1.25rem; font-weight: 500; letter-spacing: 0; }
+    .brand span { color: var(--mute); font-weight: 400; margin-left: 8px; font-size: 0.95rem; }
+    .login {
+      text-decoration: none; color: var(--blue); font-weight: 500; border: 1px solid var(--line);
+      border-radius: 4px; padding: 8px 14px; background: #fff;
+    }
+    .login:hover { background: #f6f9fe; }
+    .page { max-width: 1180px; margin: 0 auto; padding: 24px 24px 64px; }
+    .card {
+      background: var(--card); border: 1px solid var(--line); border-radius: 8px;
+      box-shadow: 0 1px 2px rgba(60, 64, 67, 0.08); padding: 20px 22px; margin-bottom: 16px;
+    }
+    .session.closed { background: var(--warn-bg); border-color: #f9ab00; }
+    .session.open { background: var(--open-bg); border-color: #ceead6; }
+    .session-top, .runline, .sum, .paste-row { display: flex; justify-content: space-between; gap: 16px; align-items: center; flex-wrap: wrap; }
+    .state, .run { margin: 0; font-size: 1.35rem; font-weight: 500; }
+    .state.closed { color: var(--warn); }
+    .state.open { color: var(--green); }
+    .clock, .note, .detail, .sub, .tile-line, .k, th, .empty, .invite, .signal, .meta { color: var(--mute); }
+    .detail, .note { margin: 8px 0 0; }
+    .rail { position: relative; height: 46px; margin-top: 16px; }
+    .rail-track { position: absolute; left: 0; right: 0; top: 18px; height: 3px; border-radius: 3px; background: #e8eaed; }
     .rail-mark {
-      position: absolute; top: 8px; width: 2px; height: 22px; background: var(--ink);
+      position: absolute; top: 8px; width: 3px; height: 22px; background: var(--blue); border-radius: 2px;
       transform: translateX(-50%); transition: left 400ms ease;
     }
     .rail-mark span {
       position: absolute; top: -16px; left: 50%; transform: translateX(-50%);
-      font-size: 0.75rem; color: var(--mute); white-space: nowrap;
+      font-size: 0.75rem; color: var(--blue); font-weight: 500; white-space: nowrap;
     }
-    .rail-ends { display: flex; justify-content: space-between; margin-top: 2px; color: var(--mute); font-size: 0.85rem; }
-    .desk { padding: 22px 0; border-bottom: 1px solid var(--rule); }
-    .runline { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
-    .run { margin: 0; font-size: 1.25rem; font-weight: 700; }
-    .facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px 18px; margin-top: 16px; }
-    .fact .k { color: var(--mute); font-size: 0.92rem; }
-    .fact .v { margin-top: 2px; font-weight: 500; }
-    .controls { display: flex; justify-content: space-between; gap: 16px; align-items: center; flex-wrap: wrap; margin-top: 18px; }
-    .tiles { display: flex; gap: 10px; flex-wrap: wrap; }
+    .rail-ends { display: flex; justify-content: space-between; color: var(--mute); font-size: 0.8rem; }
+    .facts, .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 16px; }
+    .fact, .stat { background: #f8f9fa; border-radius: 8px; padding: 10px 12px; }
+    .fact .v, .stat .v { margin-top: 2px; font-weight: 500; color: var(--ink); }
+    .controls { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; flex-wrap: wrap; margin-top: 16px; }
+    .tiles { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 260px; }
     .tile {
-      display: block; min-width: 220px; padding: 10px 12px; cursor: pointer;
-      border: 1px solid var(--rule); background: transparent;
+      display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; cursor: pointer;
+      border: 1px solid var(--line); border-radius: 8px; background: #fff;
     }
-    .tile input { margin: 0 8px 0 0; accent-color: var(--open); }
-    .tile.on { border-color: var(--ink); background: var(--panel); }
-    .tile-name { font-weight: 700; }
-    .tile-line { display: block; margin-top: 4px; color: var(--mute); font-size: 0.92rem; }
+    .tile.on { border-color: var(--blue); background: #e8f0fe; }
+    .tile input { margin-top: 3px; accent-color: var(--blue); }
+    .tile-name { font-weight: 500; color: var(--ink); }
+    .tile-line { display: block; margin-top: 2px; font-size: 0.85rem; }
+    .tile .remove {
+      margin-left: auto; background: transparent; color: var(--blue); border: 0; padding: 0; font-weight: 500; cursor: pointer;
+    }
     .actions { display: flex; gap: 8px; }
-    button { border: 0; padding: 10px 16px; font-weight: 700; cursor: pointer; }
-    button.start { background: var(--open); color: #F7F8F6; }
-    button.stop { background: var(--loss); color: #F7F8F6; }
-    button:disabled { opacity: 0.4; cursor: default; }
+    button { border-radius: 4px; padding: 8px 16px; font-weight: 500; cursor: pointer; }
+    button.start { background: var(--blue); color: #fff; border: 0; }
+    button.start:hover:not(:disabled) { background: var(--blue-dark); }
+    button.stop { background: #fff; color: var(--red); border: 1px solid var(--line); }
+    button.ghost { background: #fff; color: var(--blue); border: 1px solid var(--line); }
+    button:disabled { opacity: 0.45; cursor: default; }
     .msg { margin: 12px 0 0; min-height: 1.2em; }
-    .msg.ok { color: var(--open); }
-    .msg.err { color: var(--loss); }
-    .books { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; padding-top: 22px; }
-    .book h2 { margin: 0; font-size: 1.25rem; }
-    .phase { margin: 6px 0 0; font-weight: 500; }
-    .signal { margin: 4px 0 0; color: var(--mute); }
-    .meta { margin: 10px 0 0; color: var(--mute); }
-    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 14px 0; }
-    .stat { padding-top: 8px; border-top: 1px solid var(--rule); }
-    .stat .k { color: var(--mute); font-size: 0.88rem; }
-    .stat .v { font-weight: 700; font-size: 1.05rem; }
-    .up { color: var(--open); }
-    .down { color: var(--loss); }
+    .msg.ok { color: var(--green); }
+    .msg.err { color: var(--red); }
+    .paste-row { align-items: flex-end; margin-bottom: 12px; }
+    label.field { display: flex; flex-direction: column; gap: 6px; color: var(--mute); font-size: 0.8rem; font-weight: 500; }
+    input[type="text"], textarea {
+      border: 1px solid var(--line); border-radius: 4px; padding: 8px 12px; background: #fff; color: var(--ink);
+    }
+    input[type="text"] { height: 36px; min-width: 240px; }
+    textarea { width: 100%; min-height: 140px; resize: vertical; font-family: "Roboto Mono", ui-monospace, monospace; font-size: 0.85rem; }
+    .books { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+    .book h2 { margin: 0; font-size: 1.15rem; font-weight: 500; }
+    .phase { margin: 6px 0 0; font-weight: 500; color: var(--ink); }
+    .signal, .meta { margin: 4px 0 0; font-size: 0.9rem; }
+    .up { color: var(--green); }
+    .down { color: var(--red); }
     .scroll { overflow: auto; }
-    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-    th, td { text-align: left; padding: 6px 8px 6px 0; border-bottom: 1px solid var(--rule); white-space: nowrap; }
-    th { color: var(--mute); font-weight: 500; }
-    .empty { color: var(--mute); }
-    .invite { margin: 0; color: var(--mute); }
-    .sum { display: flex; justify-content: space-between; gap: 16px; align-items: baseline; margin-top: 28px; padding-top: 16px; border-top: 1px solid var(--ink); }
-    .sum p { margin: 0; color: var(--mute); }
-    .sum .v { font-size: 1.6rem; font-weight: 700; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th, td { text-align: left; padding: 8px 8px 8px 0; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    th { font-weight: 500; }
+    .sum { margin: 0; }
+    .sum p { margin: 4px 0 0; }
+    .sum .v { font-size: 1.6rem; font-weight: 500; }
     .changed { animation: tick 320ms ease; }
     tr.row-in { animation: row-in 240ms ease; }
     @keyframes tick { from { opacity: 0.35; } to { opacity: 1; } }
     @keyframes row-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
     @media (max-width: 800px) {
-      .facts, .stats, .books { grid-template-columns: 1fr 1fr; }
+      .facts, .stats { grid-template-columns: 1fr 1fr; }
       .books { grid-template-columns: 1fr; }
-      header, .session-top, .runline, .sum { flex-direction: column; align-items: flex-start; }
+      .topbar, .session-top, .runline, .sum { align-items: flex-start; }
     }
     @media (prefers-reduced-motion: reduce) {
       .rail-mark { transition: none; }
@@ -117,16 +128,12 @@
   </style>
 </head>
 <body>
-  <main class="sheet">
-    <header>
-      <div>
-        <h1>Futures paper</h1>
-        <p class="sub">One Nifty strike. Two indicators. Paper fills only.</p>
-      </div>
-      <a class="login" href="/api/v1/auth/login">Log in with Zerodha</a>
-    </header>
-
-    <section class="session" id="marketCard">
+  <header class="topbar">
+    <div class="brand">Futures paper <span>Paper fills only</span></div>
+    <a class="login" href="/api/v1/auth/login">Log in with Zerodha</a>
+  </header>
+  <main class="page">
+    <section class="card session" id="marketCard">
       <div class="session-top">
         <h2 class="state" id="marketState">Checking the session</h2>
         <div class="clock" id="marketClock"></div>
@@ -145,7 +152,7 @@
       <p class="note" id="marketLogin"></p>
     </section>
 
-    <section class="desk">
+    <section class="card desk">
       <div class="runline">
         <h2 class="run" id="runState">Stopped</h2>
       </div>
@@ -173,11 +180,26 @@
       <div id="msg" class="msg"></div>
     </section>
 
+    <section class="card">
+      <h2 class="run">Add an indicator</h2>
+      <p class="sub">Paste Pine Script. A buy opens the call. A sell opens the put. Check it, then press Start with the others.</p>
+      <div class="paste-row">
+        <label class="field">Name
+          <input id="pineName" type="text" placeholder="RSI cross" />
+        </label>
+        <button type="button" class="ghost" id="btnConvert">Convert</button>
+      </div>
+      <label class="field">Pine Script
+        <textarea id="pineSource" spellcheck="false" placeholder="//@version=5"></textarea>
+      </label>
+      <div id="convertMsg" class="msg"></div>
+    </section>
+
     <div class="books" id="books">
       <p class="invite" id="invite">Check an indicator, then press Start.</p>
     </div>
 
-    <section class="sum">
+    <section class="card sum">
       <div>
         <strong>Both books</strong>
         <p>Closed profit plus the open mark.</p>
@@ -188,7 +210,9 @@
 
   <script>
     const TILE_LINE = "A buy opens the call. A sell opens the put.";
+    const SAVE_KEY = "futuresPaperIndicators";
     const books = new Map();
+    let indicatorRows = [];
 
     function inr(n) {
       if (n == null || n === "" || Number.isNaN(Number(n))) return "—";
@@ -278,35 +302,68 @@
       setText(document.getElementById("railEnd"), right);
     }
 
+    function loadSaved() {
+      try { return JSON.parse(localStorage.getItem(SAVE_KEY) || "[]"); }
+      catch (e) { return []; }
+    }
+    function remember(row) {
+      const saved = loadSaved().filter(item => item.id !== row.id && item.python !== row.python);
+      saved.push({ id: row.id, label: row.label, pine: row.pine || "", python: row.python || "" });
+      localStorage.setItem(SAVE_KEY, JSON.stringify(saved));
+    }
+    function forget(id) {
+      localStorage.setItem(SAVE_KEY, JSON.stringify(loadSaved().filter(item => item.id !== id)));
+    }
     function checkedModes() {
       return [...document.querySelectorAll("#checks input:checked")].map(el => el.value);
     }
     function renderChecks(indicators, locked, selected) {
       const box = document.getElementById("checks");
       const chosen = new Set(selected && selected.length ? selected : indicators.map(row => row.id));
-      if (!box.dataset.built) {
-        box.dataset.built = "1";
+      const sig = indicators.map(row => row.id + (row.custom ? "*" : "")).join("|");
+      if (box.dataset.sig !== sig) {
+        box.dataset.sig = sig;
         box.innerHTML = indicators.map(row => `<label class="tile">
           <input type="checkbox" value="${escapeHtml(row.id)}" />
-          <span class="tile-name">${escapeHtml(row.label)}</span>
-          <span class="tile-line">${TILE_LINE}</span>
+          <span>
+            <span class="tile-name">${escapeHtml(row.label)}</span>
+            <span class="tile-line">${TILE_LINE}</span>
+          </span>
+          ${row.custom ? `<button type="button" class="remove" data-id="${escapeHtml(row.id)}">Remove</button>` : ""}
         </label>`).join("");
-        box.querySelectorAll("input").forEach(input => {
-          input.addEventListener("change", () => input.closest(".tile").classList.toggle("on", input.checked));
+        box.querySelectorAll(".remove").forEach(btn => {
+          btn.addEventListener("click", event => {
+            event.preventDefault();
+            event.stopPropagation();
+            removeIndicator(btn.dataset.id);
+          });
         });
       }
       box.querySelectorAll("input").forEach(input => {
-        input.checked = chosen.has(input.value);
+        if (selected && selected.length) input.checked = chosen.has(input.value);
+        else if (!input.dataset.touched) input.checked = chosen.has(input.value);
         input.disabled = !!locked;
         input.closest(".tile").classList.toggle("on", input.checked);
+        const remove = input.closest(".tile").querySelector(".remove");
+        if (remove) remove.disabled = !!locked;
       });
+      if (!box.dataset.bound) {
+        box.dataset.bound = "1";
+        box.addEventListener("change", event => {
+          const input = event.target;
+          if (input && input.matches && input.matches("input")) {
+            input.dataset.touched = "1";
+            input.closest(".tile").classList.toggle("on", input.checked);
+          }
+        });
+      }
     }
 
     function ensureBook(row) {
       let node = books.get(row.id);
       if (node) return node;
       const section = document.createElement("section");
-      section.className = "book";
+        section.className = "card book";
       section.innerHTML = `
         <h2></h2>
         <p class="phase"></p>
@@ -409,9 +466,12 @@
       const market = s.market || {};
       const running = !!s.running;
       const state = document.getElementById("marketState");
+      const card = document.getElementById("marketCard");
       setText(state, market.label || "Session");
       state.classList.toggle("open", !!market.open);
       state.classList.toggle("closed", market.open === false);
+      card.classList.toggle("open", !!market.open);
+      card.classList.toggle("closed", market.open === false);
       setText(document.getElementById("marketClock"), market.now_ist || "");
       setText(document.getElementById("marketDetail"), market.detail || "");
       setText(document.getElementById("marketNext"), market.next_open ? "Next open " + market.next_open : (market.closes ? "Session ends " + market.closes : ""));
@@ -507,18 +567,85 @@
       await refresh();
     }
 
+    function setConvertMsg(text, ok) {
+      const el = document.getElementById("convertMsg");
+      setText(el, text || "");
+      el.classList.toggle("ok", ok === true);
+      el.classList.toggle("err", ok === false);
+    }
+    async function removeIndicator(id) {
+      const data = await api("/api/v1/paper/futures/indicators/" + encodeURIComponent(id), { method: "DELETE" });
+      if (!data.ok) {
+        setConvertMsg(data.error || "Could not remove", false);
+        return;
+      }
+      forget(id);
+      indicatorRows = data.indicators || indicatorRows.filter(row => row.id !== id);
+      renderChecks(indicatorRows, false, checkedModes());
+      setConvertMsg("Removed.", true);
+    }
+    async function convertPine() {
+      const name = document.getElementById("pineName").value.trim();
+      const pine = document.getElementById("pineSource").value;
+      if (!name) {
+        setConvertMsg("Name the indicator.", false);
+        return;
+      }
+      if (!pine.trim()) {
+        setConvertMsg("Paste the Pine Script.", false);
+        return;
+      }
+      document.getElementById("btnConvert").disabled = true;
+      setConvertMsg("Converting…", true);
+      const data = await api("/api/v1/paper/futures/indicators", {
+        method: "POST",
+        body: JSON.stringify({ name, pine }),
+      });
+      document.getElementById("btnConvert").disabled = false;
+      if (!data.ok) {
+        setConvertMsg(data.error || "Could not convert", false);
+        return;
+      }
+      const row = data.indicator || {};
+      remember({ id: row.id, label: row.label, pine, python: data.python || "" });
+      indicatorRows = data.indicators || indicatorRows.concat([row]);
+      const selected = [...new Set(checkedModes().concat([row.id]))];
+      renderChecks(indicatorRows, false, selected);
+      setConvertMsg(row.label + " is ready. Leave it checked and press Start.", true);
+    }
+    document.getElementById("btnConvert").addEventListener("click", convertPine);
     document.getElementById("btnStart").addEventListener("click", startDesk);
     document.getElementById("btnStop").addEventListener("click", stopDesk);
     paintRail();
     setInterval(paintRail, 30000);
 
     (async function init() {
-      const listed = await api("/api/v1/paper/futures/indicators");
-      const indicators = (listed && listed.indicators) || [
+      let listed = await api("/api/v1/paper/futures/indicators");
+      let indicators = (listed && listed.indicators) || [];
+      const have = new Set(indicators.map(row => row.id));
+      for (const saved of loadSaved()) {
+        if (have.has(saved.id) || !saved.python) continue;
+        const restored = await api("/api/v1/paper/futures/indicators", {
+          method: "POST",
+          body: JSON.stringify({ name: saved.label, pine: saved.pine || "", python: saved.python }),
+        });
+        if (restored.ok && restored.indicator) {
+          remember({
+            id: restored.indicator.id,
+            label: restored.indicator.label,
+            pine: saved.pine || "",
+            python: saved.python,
+          });
+        }
+      }
+      listed = await api("/api/v1/paper/futures/indicators");
+      indicatorRows = (listed && listed.indicators) || [
         { id: "ut_bot_fut_cepe", label: "UT Bot" },
         { id: "bxtrender_fut_cepe", label: "B-Xtrender" },
       ];
-      renderChecks(indicators, false, indicators.map(row => row.id));
+      const savedIds = new Set(loadSaved().map(row => row.id));
+      const selected = indicatorRows.map(row => row.id).filter(id => !id.startsWith("custom_") || savedIds.has(id));
+      renderChecks(indicatorRows, false, selected.length ? selected : indicatorRows.map(row => row.id));
       await refresh();
       setInterval(refresh, 2000);
     })();
