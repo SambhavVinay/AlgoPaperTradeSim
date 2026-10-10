@@ -3,166 +3,225 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Futures paper — NeoTV</title>
+  <title>Futures paper</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;700&amp;display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #f3f5f8;
-      --panel: #ffffff;
-      --text: #1c2430;
-      --muted: #5c6b7a;
-      --accent: #1d6fbf;
-      --accent-text: #ffffff;
-      --good: #0d8a4f;
-      --good-text: #ffffff;
-      --bad: #c23b42;
-      --bad-text: #ffffff;
-      --line: #d5dde6;
-      --nav: #e7eef6;
-      --pill: #e7eef6;
-      --pill-run: #e5f6ec;
-      --shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+      --sheet: #EEF2EF;
+      --ink: #1A2420;
+      --mute: #5E6B64;
+      --rule: #C9D4CE;
+      --open: #0F6E56;
+      --halt: #9A6B2F;
+      --loss: #A33B3B;
+      --panel: #F7F8F6;
     }
     * { box-sizing: border-box; }
+    html { background: var(--sheet); }
     body {
-      margin: 0; font-family: "Segoe UI", system-ui, sans-serif;
-      background: var(--bg); color: var(--text); padding: 20px 22px 40px;
+      margin: 0;
+      color: var(--ink);
+      font-family: "Familjen Grotesk", "Segoe UI", sans-serif;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.45;
     }
-    a { color: var(--accent); }
-    h1 { margin: 0 0 4px; font-size: 1.45rem; }
-    .sub { margin: 0; color: var(--muted); max-width: 640px; }
-    .pagehead { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
-    .topnav { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-    .topnav a {
-      text-decoration: none; background: var(--nav); color: var(--text);
-      border: 1px solid var(--line); border-radius: 8px; padding: 8px 14px; font-weight: 600;
+    a { color: var(--open); }
+    button, input { font: inherit; }
+    :focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+    .sheet { max-width: 1120px; margin: 0 auto; padding: 28px 22px 64px; }
+    header { display: flex; justify-content: space-between; gap: 16px; align-items: flex-end; }
+    h1 { margin: 0; font-size: 1.8rem; font-weight: 700; letter-spacing: -0.03em; }
+    .sub { margin: 6px 0 0; max-width: 38rem; color: var(--mute); }
+    .login {
+      text-decoration: none; color: var(--ink); border-bottom: 1px solid var(--ink);
+      padding-bottom: 2px; font-weight: 500;
     }
-    .topnav a.active { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
-    .card {
-      background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
-      padding: 16px; box-shadow: var(--shadow); margin-bottom: 14px;
+    .session { margin-top: 28px; padding-bottom: 22px; border-bottom: 1px solid var(--rule); }
+    .session-top { display: flex; justify-content: space-between; gap: 16px; align-items: baseline; }
+    .state { margin: 0; font-size: 1.7rem; font-weight: 700; letter-spacing: -0.03em; }
+    .state.closed { color: var(--halt); }
+    .state.open { color: var(--open); }
+    .clock { color: var(--mute); }
+    .detail, .note { margin: 8px 0 0; max-width: 42rem; }
+    .note { color: var(--mute); }
+    .rail { position: relative; height: 46px; margin-top: 18px; }
+    .rail-track { position: absolute; left: 0; right: 0; top: 18px; height: 2px; background: var(--rule); }
+    .rail-mark {
+      position: absolute; top: 8px; width: 2px; height: 22px; background: var(--ink);
+      transform: translateX(-50%); transition: left 400ms ease;
     }
-    .label { font-size: 0.75rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
-    .checks { display: flex; gap: 16px; flex-wrap: wrap; margin: 10px 0 14px; }
-    .checks label { display: flex; gap: 8px; align-items: center; font-weight: 600; }
-    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
-    button {
-      border: 0; border-radius: 8px; padding: 9px 14px; font-weight: 700; cursor: pointer;
+    .rail-mark span {
+      position: absolute; top: -16px; left: 50%; transform: translateX(-50%);
+      font-size: 0.75rem; color: var(--mute); white-space: nowrap;
     }
-    button.good { background: var(--good); color: var(--good-text); }
-    button.bad { background: var(--bad); color: var(--bad-text); }
-    button:disabled { opacity: 0.45; cursor: default; }
-    .msg { margin-top: 10px; min-height: 1.2em; }
-    .msg.ok { color: var(--good); }
-    .msg.err { color: var(--bad); }
-    .contract { display: flex; gap: 14px 22px; flex-wrap: wrap; align-items: baseline; }
-    .contract strong { font-size: 1rem; }
-    .pill {
-      display: inline-block; background: var(--pill); border-radius: 999px;
-      padding: 2px 8px; font-size: 0.78rem; font-weight: 700;
+    .rail-ends { display: flex; justify-content: space-between; margin-top: 2px; color: var(--mute); font-size: 0.85rem; }
+    .desk { padding: 22px 0; border-bottom: 1px solid var(--rule); }
+    .runline { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+    .run { margin: 0; font-size: 1.25rem; font-weight: 700; }
+    .facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px 18px; margin-top: 16px; }
+    .fact .k { color: var(--mute); font-size: 0.92rem; }
+    .fact .v { margin-top: 2px; font-weight: 500; }
+    .controls { display: flex; justify-content: space-between; gap: 16px; align-items: center; flex-wrap: wrap; margin-top: 18px; }
+    .tiles { display: flex; gap: 10px; flex-wrap: wrap; }
+    .tile {
+      display: block; min-width: 220px; padding: 10px 12px; cursor: pointer;
+      border: 1px solid var(--rule); background: transparent;
     }
-    .pill.run { background: var(--pill-run); color: var(--good); }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-    @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } }
-    .headrow { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
-    h2 { margin: 0; font-size: 1.15rem; }
-    .phase { margin: 6px 0 0; font-weight: 650; }
-    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 12px 0; }
-    .stat { background: var(--bg); border-radius: 8px; padding: 8px 10px; }
-    .stat .v { font-size: 1.15rem; font-weight: 750; margin-top: 2px; }
-    .ok { color: var(--good); }
-    .badc { color: var(--bad); }
-    table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
-    th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
-    th { color: var(--muted); font-size: 0.72rem; letter-spacing: 0.03em; text-transform: uppercase; }
-    .empty { color: var(--muted); padding: 8px 0; }
+    .tile input { margin: 0 8px 0 0; accent-color: var(--open); }
+    .tile.on { border-color: var(--ink); background: var(--panel); }
+    .tile-name { font-weight: 700; }
+    .tile-line { display: block; margin-top: 4px; color: var(--mute); font-size: 0.92rem; }
+    .actions { display: flex; gap: 8px; }
+    button { border: 0; padding: 10px 16px; font-weight: 700; cursor: pointer; }
+    button.start { background: var(--open); color: #F7F8F6; }
+    button.stop { background: var(--loss); color: #F7F8F6; }
+    button:disabled { opacity: 0.4; cursor: default; }
+    .msg { margin: 12px 0 0; min-height: 1.2em; }
+    .msg.ok { color: var(--open); }
+    .msg.err { color: var(--loss); }
+    .books { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; padding-top: 22px; }
+    .book h2 { margin: 0; font-size: 1.25rem; }
+    .phase { margin: 6px 0 0; font-weight: 500; }
+    .signal { margin: 4px 0 0; color: var(--mute); }
+    .meta { margin: 10px 0 0; color: var(--mute); }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 14px 0; }
+    .stat { padding-top: 8px; border-top: 1px solid var(--rule); }
+    .stat .k { color: var(--mute); font-size: 0.88rem; }
+    .stat .v { font-weight: 700; font-size: 1.05rem; }
+    .up { color: var(--open); }
+    .down { color: var(--loss); }
     .scroll { overflow: auto; }
-    .banner { border-left: 4px solid var(--muted); }
-    .banner.open { border-left-color: var(--good); background: #f4fbf7; }
-    .banner.closed { border-left-color: #b5812b; background: #fff8ee; }
-    .banner-top { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: center; }
-    .banner p { margin: 8px 0 0; }
-    .banner .note { color: var(--muted); }
-    .pill.closed { background: #fff1d6; color: #8a5a10; }
-    .facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 14px; }
-    @media (max-width: 980px) { .facts { grid-template-columns: 1fr 1fr; } }
-    .fact { background: var(--bg); border-radius: 8px; padding: 8px 10px; }
-    .fact .v { margin-top: 2px; font-weight: 700; word-break: break-word; }
-    .combined { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: baseline; }
-    .combined .v { font-size: 1.35rem; font-weight: 750; }
-    .meta { display: flex; gap: 14px 18px; flex-wrap: wrap; margin-top: 8px; color: var(--muted); font-size: 0.86rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th, td { text-align: left; padding: 6px 8px 6px 0; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+    th { color: var(--mute); font-weight: 500; }
+    .empty { color: var(--mute); }
+    .invite { margin: 0; color: var(--mute); }
+    .sum { display: flex; justify-content: space-between; gap: 16px; align-items: baseline; margin-top: 28px; padding-top: 16px; border-top: 1px solid var(--ink); }
+    .sum p { margin: 0; color: var(--mute); }
+    .sum .v { font-size: 1.6rem; font-weight: 700; }
+    .changed { animation: tick 320ms ease; }
+    tr.row-in { animation: row-in 240ms ease; }
+    @keyframes tick { from { opacity: 0.35; } to { opacity: 1; } }
+    @keyframes row-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+    @media (max-width: 800px) {
+      .facts, .stats, .books { grid-template-columns: 1fr 1fr; }
+      .books { grid-template-columns: 1fr; }
+      header, .session-top, .runline, .sum { flex-direction: column; align-items: flex-start; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .rail-mark { transition: none; }
+      .changed, tr.row-in { animation: none; }
+    }
   </style>
 </head>
 <body>
-  <header class="pagehead">
-    <div>
-      <h1>Futures paper</h1>
-      <p class="sub">Several indicators on one Nifty spot strike. Each keeps its own trades and profit. Nothing is sent to a broker.</p>
-    </div>
-    <nav class="topnav">
-      <a href="/api/v1/auth/login">Log in with Zerodha</a>
-    </nav>
-  </header>
-
-  <section class="card">
-    <div class="label">Indicators</div>
-    <div class="checks" id="checks"></div>
-    <div class="actions">
-      <button type="button" class="good" id="btnStart" onclick="startDesk()">Start</button>
-      <button type="button" class="bad" id="btnStop" onclick="stopDesk()" disabled>Stop</button>
-    </div>
-    <div id="msg" class="msg"></div>
-  </section>
-
-  <section class="card" id="marketCard">
-    <div class="banner-top">
-      <span class="pill" id="marketPill">Checking session…</span>
-      <span id="marketClock" class="label"></span>
-    </div>
-    <p id="marketDetail"></p>
-    <p id="marketNext" class="note"></p>
-    <p id="marketArmed" class="note"></p>
-    <p id="marketLogin" class="note"></p>
-  </section>
-
-  <section class="card">
-    <div class="contract">
-      <span class="pill" id="runPill">Stopped</span>
-      <span id="sessionLine">NSE cash session 09:15–15:30 IST, Monday to Friday. Paper only.</span>
-    </div>
-    <div class="facts" id="facts"></div>
-  </section>
-
-  <section class="card">
-    <div class="combined">
+  <main class="sheet">
+    <header>
       <div>
-        <div class="label">Both indicators</div>
-        <div>Closed profit plus the open mark on each book.</div>
+        <h1>Futures paper</h1>
+        <p class="sub">One Nifty strike. Two indicators. Paper fills only.</p>
+      </div>
+      <a class="login" href="/api/v1/auth/login">Log in with Zerodha</a>
+    </header>
+
+    <section class="session" id="marketCard">
+      <div class="session-top">
+        <h2 class="state" id="marketState">Checking the session</h2>
+        <div class="clock" id="marketClock"></div>
+      </div>
+      <p class="detail" id="marketDetail"></p>
+      <div class="rail" aria-hidden="true">
+        <div class="rail-track"></div>
+        <div class="rail-mark" id="railMark"><span>now</span></div>
+      </div>
+      <div class="rail-ends">
+        <span id="railStart">09:15</span>
+        <span id="railEnd">15:30</span>
+      </div>
+      <p class="note" id="marketNext"></p>
+      <p class="note" id="marketArmed"></p>
+      <p class="note" id="marketLogin"></p>
+    </section>
+
+    <section class="desk">
+      <div class="runline">
+        <h2 class="run" id="runState">Stopped</h2>
+      </div>
+      <div class="facts">
+        <div class="fact"><div class="k">Futures</div><div class="v" id="futSym">—</div></div>
+        <div class="fact"><div class="k">Futures last</div><div class="v" id="futLast">—</div></div>
+        <div class="fact"><div class="k">Last tick</div><div class="v" id="lastTick">No tick yet</div></div>
+        <div class="fact"><div class="k">Spot at Start</div><div class="v" id="spot">—</div></div>
+        <div class="fact"><div class="k">Strike</div><div class="v" id="strike">—</div></div>
+        <div class="fact"><div class="k">Call</div><div class="v" id="call">—</div></div>
+        <div class="fact"><div class="k">Put</div><div class="v" id="put">—</div></div>
+        <div class="fact"><div class="k">Quantity</div><div class="v" id="qty">—</div></div>
+        <div class="fact"><div class="k">Signal hold</div><div class="v" id="hold">15 seconds</div></div>
+        <div class="fact"><div class="k">Futures stop</div><div class="v" id="stopPts">15 points</div></div>
+        <div class="fact"><div class="k">Warm-up</div><div class="v" id="warmup">—</div></div>
+        <div class="fact"><div class="k">Premiums</div><div class="v" id="premium">Locked when you press Start</div></div>
+      </div>
+      <div class="controls">
+        <div class="tiles" id="checks"></div>
+        <div class="actions">
+          <button type="button" class="start" id="btnStart">Start</button>
+          <button type="button" class="stop" id="btnStop" disabled>Stop</button>
+        </div>
+      </div>
+      <div id="msg" class="msg"></div>
+    </section>
+
+    <div class="books" id="books">
+      <p class="invite" id="invite">Check an indicator, then press Start.</p>
+    </div>
+
+    <section class="sum">
+      <div>
+        <strong>Both books</strong>
+        <p>Closed profit plus the open mark.</p>
       </div>
       <div class="v" id="combinedTotal">0.00</div>
-    </div>
-  </section>
-
-  <div class="grid" id="cards"></div>
+    </section>
+  </main>
 
   <script>
+    const TILE_LINE = "A buy opens the call. A sell opens the put.";
+    const books = new Map();
+
     function inr(n) {
       if (n == null || n === "" || Number.isNaN(Number(n))) return "—";
       return Number(n).toFixed(2);
     }
-    function pnlClass(n) {
-      if (n > 0) return "ok";
-      if (n < 0) return "badc";
-      return "";
+    function moneyClass(n) {
+      const value = Number(n);
+      if (value > 0) return "v up";
+      if (value < 0) return "v down";
+      return "v";
     }
     function escapeHtml(s) {
       return String(s || "").replace(/[&<>"']/g, c => ({
         "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;"
       }[c]));
     }
+    function setText(el, value) {
+      if (!el) return;
+      const next = value == null ? "" : String(value);
+      if (el.textContent === next) return;
+      const first = !el.dataset.seen;
+      el.dataset.seen = "1";
+      el.textContent = next;
+      if (first) return;
+      el.classList.remove("changed");
+      void el.offsetWidth;
+      el.classList.add("changed");
+    }
     function setMsg(text, ok) {
       const el = document.getElementById("msg");
-      el.textContent = text || "";
-      el.className = "msg " + (ok === true ? "ok" : ok === false ? "err" : "");
+      setText(el, text || "");
+      el.classList.toggle("ok", ok === true);
+      el.classList.toggle("err", ok === false);
     }
     function showLogin(text) {
       setMsg(text || "Log in with Zerodha, then press Start.", false);
@@ -181,153 +240,245 @@
       return data;
     }
 
+    function istNow() {
+      const parts = {};
+      for (const part of new Intl.DateTimeFormat("en-GB", {
+        timeZone: "Asia/Kolkata",
+        weekday: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+        hourCycle: "h23",
+      }).formatToParts(new Date())) {
+        parts[part.type] = part.value;
+      }
+      const days = { Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 6 };
+      return {
+        weekday: days[parts.weekday] ?? 0,
+        minutes: Number(parts.hour) * 60 + Number(parts.minute),
+      };
+    }
+    function paintRail() {
+      const now = istNow();
+      let left = "09:15";
+      let right = "15:30";
+      let pct = 0;
+      if (now.weekday >= 5) {
+        const elapsed = (now.weekday - 5) * 1440 + now.minutes + (1440 - (15 * 60 + 30));
+        const span = (1440 - (15 * 60 + 30)) + 2 * 1440 + (9 * 60 + 15);
+        pct = Math.max(0, Math.min(1, elapsed / span));
+        left = "Friday close";
+        right = "Monday 09:15";
+      } else {
+        const open = 9 * 60 + 15;
+        const close = 15 * 60 + 30;
+        pct = now.minutes <= open ? 0 : now.minutes >= close ? 1 : (now.minutes - open) / (close - open);
+      }
+      document.getElementById("railMark").style.left = (pct * 100) + "%";
+      setText(document.getElementById("railStart"), left);
+      setText(document.getElementById("railEnd"), right);
+    }
+
     function checkedModes() {
       return [...document.querySelectorAll("#checks input:checked")].map(el => el.value);
     }
-
     function renderChecks(indicators, locked, selected) {
       const box = document.getElementById("checks");
       const chosen = new Set(selected && selected.length ? selected : indicators.map(row => row.id));
-      box.innerHTML = indicators.map(row => `<label>
-        <input type="checkbox" value="${escapeHtml(row.id)}" ${chosen.has(row.id) ? "checked" : ""} ${locked ? "disabled" : ""} />
-        ${escapeHtml(row.label)}
-      </label>`).join("");
-    }
-
-    function tradeRows(trades) {
-      if (!trades.length) {
-        return '<tr><td colspan="10" class="empty">No trades yet. Waiting for the first signal.</td></tr>';
+      if (!box.dataset.built) {
+        box.dataset.built = "1";
+        box.innerHTML = indicators.map(row => `<label class="tile">
+          <input type="checkbox" value="${escapeHtml(row.id)}" />
+          <span class="tile-name">${escapeHtml(row.label)}</span>
+          <span class="tile-line">${TILE_LINE}</span>
+        </label>`).join("");
+        box.querySelectorAll("input").forEach(input => {
+          input.addEventListener("change", () => input.closest(".tile").classList.toggle("on", input.checked));
+        });
       }
-      return trades.slice().reverse().map(t => `<tr>
-        <td>${t.n ?? ""}</td>
-        <td>${escapeHtml(t.leg || "")}</td>
-        <td>${escapeHtml(t.symbol || "")}</td>
-        <td>${t.qty ?? ""}</td>
-        <td>${inr(t.entry_price)}</td>
-        <td>${escapeHtml(t.entry_at || "")}</td>
-        <td>${t.exit_price == null ? "—" : inr(t.exit_price)}</td>
-        <td>${escapeHtml(t.exit_at || "—")}</td>
-        <td class="${pnlClass(Number(t.pnl))}">${t.pnl == null ? "—" : inr(t.pnl)}</td>
-        <td class="${pnlClass(Number(t.running_total))}">${t.running_total == null ? "—" : inr(t.running_total)}</td>
-      </tr>`).join("");
+      box.querySelectorAll("input").forEach(input => {
+        input.checked = chosen.has(input.value);
+        input.disabled = !!locked;
+        input.closest(".tile").classList.toggle("on", input.checked);
+      });
     }
 
-    function fact(label, value) {
-      return `<div class="fact"><div class="label">${escapeHtml(label)}</div><div class="v">${value}</div></div>`;
+    function ensureBook(row) {
+      let node = books.get(row.id);
+      if (node) return node;
+      const section = document.createElement("section");
+      section.className = "book";
+      section.innerHTML = `
+        <h2></h2>
+        <p class="phase"></p>
+        <p class="signal"></p>
+        <p class="meta"></p>
+        <div class="stats">
+          <div class="stat"><div class="k">Closed</div><div class="v" data-k="closed"></div></div>
+          <div class="stat"><div class="k">Open</div><div class="v" data-k="open"></div></div>
+          <div class="stat"><div class="k">Total</div><div class="v" data-k="total"></div></div>
+          <div class="stat"><div class="k">Position</div><div class="v" data-k="side"></div></div>
+        </div>
+        <div class="scroll"><table>
+          <thead><tr>
+            <th>#</th><th>Leg</th><th>Symbol</th><th>Qty</th>
+            <th>Entry</th><th>Entry time</th><th>Exit</th><th>Exit time</th>
+            <th>Profit</th><th>Running total</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table></div>
+        <p class="msg err" hidden></p>`;
+      document.getElementById("books").appendChild(section);
+      node = {
+        section,
+        title: section.querySelector("h2"),
+        phase: section.querySelector(".phase"),
+        signal: section.querySelector(".signal"),
+        meta: section.querySelector(".meta"),
+        closed: section.querySelector('[data-k="closed"]'),
+        open: section.querySelector('[data-k="open"]'),
+        total: section.querySelector('[data-k="total"]'),
+        side: section.querySelector('[data-k="side"]'),
+        tbody: section.querySelector("tbody"),
+        error: section.querySelector(".msg"),
+      };
+      books.set(row.id, node);
+      return node;
     }
-
-    function renderMarket(market, running) {
-      const m = market || {};
-      const open = !!m.open;
-      const card = document.getElementById("marketCard");
-      card.className = "card banner " + (open ? "open" : "closed");
-      const pill = document.getElementById("marketPill");
-      pill.textContent = m.label || "Session";
-      pill.className = "pill " + (open ? "run" : "closed");
-      document.getElementById("marketClock").textContent = m.now_ist || "";
-      document.getElementById("marketDetail").textContent = m.detail || "";
-      document.getElementById("marketNext").textContent = m.next_open
-        ? "Next open: " + m.next_open
-        : (m.closes ? "Session ends " + m.closes : "");
-      document.getElementById("marketArmed").textContent = running && !open ? (m.armed_note || "") : "";
-      document.getElementById("marketLogin").textContent = open ? "" : (m.login_note || "");
-      if (m.session) document.getElementById("sessionLine").textContent = m.session + ". Paper only. Nothing is sent to a broker.";
+    function paintTrades(tbody, trades) {
+      const list = trades || [];
+      const sig = list.map(t => [t.n, t.status, t.exit_at, t.pnl, t.running_total].join(":")).join("|");
+      if (tbody.dataset.sig === sig) return;
+      const primed = tbody.dataset.sig != null;
+      const prev = new Set((tbody.dataset.sig || "").split("|").filter(Boolean).map(s => s.split(":")[0]));
+      tbody.dataset.sig = sig;
+      if (!list.length) {
+        tbody.innerHTML = '<tr><td colspan="10" class="empty">No trades yet. Waiting for the first signal.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = list.slice().reverse().map(t => {
+        const fresh = primed && !prev.has(String(t.n));
+        const pnl = t.pnl == null ? "—" : inr(t.pnl);
+        const run = t.running_total == null ? "—" : inr(t.running_total);
+        const pnlCls = t.pnl == null ? "" : Number(t.pnl) < 0 ? "down" : Number(t.pnl) > 0 ? "up" : "";
+        return `<tr class="${fresh ? "row-in" : ""}">
+          <td>${t.n ?? ""}</td>
+          <td>${escapeHtml(t.leg || "")}</td>
+          <td>${escapeHtml(t.symbol || "")}</td>
+          <td>${t.qty ?? ""}</td>
+          <td>${inr(t.entry_price)}</td>
+          <td>${escapeHtml(t.entry_at || "")}</td>
+          <td>${t.exit_price == null ? "—" : inr(t.exit_price)}</td>
+          <td>${escapeHtml(t.exit_at || "—")}</td>
+          <td class="${pnlCls}">${pnl}</td>
+          <td class="${pnlCls}">${run}</td>
+        </tr>`;
+      }).join("");
+    }
+    function paintBook(row) {
+      const node = ensureBook(row);
+      const book = row.book || {};
+      const side = row.active_side === "ce" ? "Long call" : row.active_side === "pe" ? "Long put" : "No position";
+      const unreal = book.unrealized_pnl;
+      const unrealText = unreal == null ? (book.open_symbol ? "—" : "0.00") : inr(unreal);
+      const stopLine = row.stop_price != null
+        ? `Stop if futures ${row.active_side === "ce" ? "falls to" : "rises to"} ${inr(row.stop_price)}`
+        : "No futures stop until a fill";
+      setText(node.title, row.label || "Indicator");
+      setText(node.phase, row.phase || "");
+      setText(node.signal, "Signal " + (row.live_signal || "—"));
+      setText(node.meta, `Last signal ${row.last_signal || "—"}. Warm-up ${row.warmup_bars || 0} bars. ${stopLine}`);
+      node.closed.className = moneyClass(book.realized_pnl || 0);
+      node.open.className = moneyClass(unreal || 0);
+      node.total.className = moneyClass(book.total_pnl || 0);
+      setText(node.closed, inr(book.realized_pnl || 0));
+      setText(node.open, unrealText);
+      setText(node.total, inr(book.total_pnl || 0));
+      setText(node.side, side);
+      paintTrades(node.tbody, book.trades || []);
+      if (row.error) {
+        node.error.hidden = false;
+        setText(node.error, row.error);
+      } else {
+        node.error.hidden = true;
+      }
     }
 
     function render(status) {
       const s = status || {};
       const atm = s.resolved_atm || {};
+      const market = s.market || {};
       const running = !!s.running;
-      renderMarket(s.market, running);
-      document.getElementById("runPill").textContent = running ? "Practicing" : "Stopped";
-      document.getElementById("runPill").className = "pill" + (running ? " run" : "");
-      const stopWord = s.stop_points != null ? String(s.stop_points) : "15";
-      const holdWord = s.hold_seconds != null ? String(s.hold_seconds) : "15";
-      document.getElementById("facts").innerHTML = [
-        fact("Futures", escapeHtml(s.fut_symbol || "—")),
-        fact("Futures last", s.last_ltp != null ? inr(s.last_ltp) : "—"),
-        fact("Last tick", escapeHtml(s.last_tick_time || "No tick yet")),
-        fact("Spot at Start", atm.spot != null ? inr(atm.spot) : "—"),
-        fact("Strike", atm.strike != null ? escapeHtml(String(atm.strike)) : "—"),
-        fact("Call", escapeHtml(s.ce_symbol || "—") + (atm.ce_ltp != null ? " @ " + inr(atm.ce_ltp) : "")),
-        fact("Put", escapeHtml(s.pe_symbol || "—") + (atm.pe_ltp != null ? " @ " + inr(atm.pe_ltp) : "")),
-        fact("Quantity", s.qty ? escapeHtml(String(s.qty)) : "—"),
-        fact("Signal hold", escapeHtml(holdWord) + " seconds"),
-        fact("Futures stop", escapeHtml(stopWord) + " points"),
-        fact("Warm-up bars", s.warmup_bars ? escapeHtml(String(s.warmup_bars)) : "—"),
-        fact("Premiums", escapeHtml(atm.premium_note || "Locked when you press Start")),
-      ].join("");
+      const state = document.getElementById("marketState");
+      setText(state, market.label || "Session");
+      state.classList.toggle("open", !!market.open);
+      state.classList.toggle("closed", market.open === false);
+      setText(document.getElementById("marketClock"), market.now_ist || "");
+      setText(document.getElementById("marketDetail"), market.detail || "");
+      setText(document.getElementById("marketNext"), market.next_open ? "Next open " + market.next_open : (market.closes ? "Session ends " + market.closes : ""));
+      setText(document.getElementById("marketArmed"), running && !market.open ? (market.armed_note || "") : "");
+      setText(document.getElementById("marketLogin"), market.open ? "" : (market.login_note || ""));
+      paintRail();
+
+      const run = document.getElementById("runState");
+      setText(run, running ? "Practicing" : "Stopped");
+      run.classList.toggle("up", running);
+      setText(document.getElementById("futSym"), s.fut_symbol || "—");
+      setText(document.getElementById("futLast"), s.last_ltp != null ? inr(s.last_ltp) : "—");
+      setText(document.getElementById("lastTick"), s.last_tick_time || "No tick yet");
+      setText(document.getElementById("spot"), atm.spot != null ? inr(atm.spot) : "—");
+      setText(document.getElementById("strike"), atm.strike != null ? String(atm.strike) : "—");
+      setText(document.getElementById("call"), (s.ce_symbol || "—") + (atm.ce_ltp != null ? " at " + inr(atm.ce_ltp) : ""));
+      setText(document.getElementById("put"), (s.pe_symbol || "—") + (atm.pe_ltp != null ? " at " + inr(atm.pe_ltp) : ""));
+      setText(document.getElementById("qty"), s.qty ? String(s.qty) : "—");
+      setText(document.getElementById("hold"), (s.hold_seconds != null ? s.hold_seconds : 15) + " seconds");
+      setText(document.getElementById("stopPts"), (s.stop_points != null ? s.stop_points : 15) + " points");
+      setText(document.getElementById("warmup"), s.warmup_bars ? s.warmup_bars + " bars" : "—");
+      setText(document.getElementById("premium"), atm.premium_note || "Locked when you press Start");
+
       document.getElementById("btnStart").disabled = running;
       document.getElementById("btnStop").disabled = !running;
-      if (running && (s.modes || []).length) {
-        const on = new Set(s.modes);
-        document.querySelectorAll("#checks input").forEach(el => {
-          el.checked = on.has(el.value);
-          el.disabled = true;
-        });
-      } else {
-        document.querySelectorAll("#checks input").forEach(el => { el.disabled = false; });
+      const checks = document.querySelectorAll("#checks input");
+      if (checks.length) {
+        if (running && (s.modes || []).length) {
+          const on = new Set(s.modes);
+          checks.forEach(el => {
+            el.checked = on.has(el.value);
+            el.disabled = true;
+            el.closest(".tile").classList.toggle("on", el.checked);
+          });
+        } else {
+          checks.forEach(el => {
+            el.disabled = false;
+            el.closest(".tile").classList.toggle("on", el.checked);
+          });
+        }
       }
 
-      const cards = document.getElementById("cards");
       const rows = s.indicators || [];
-      const prev = [...cards.querySelectorAll(".scroll")].map(el => el.scrollTop);
+      const invite = document.getElementById("invite");
+      const seen = new Set(rows.map(row => row.id));
+      for (const [id, node] of books) {
+        if (!seen.has(id)) {
+          node.section.remove();
+          books.delete(id);
+        }
+      }
+      if (!rows.length) {
+        if (invite) invite.hidden = false;
+      } else if (invite) {
+        invite.hidden = true;
+      }
+      rows.forEach(paintBook);
       const combined = rows.reduce((sum, row) => sum + Number((row.book || {}).total_pnl || 0), 0);
       const totalEl = document.getElementById("combinedTotal");
-      totalEl.textContent = inr(combined);
-      totalEl.className = "v " + pnlClass(combined);
-      if (!rows.length) {
-        cards.innerHTML = '<section class="card"><p class="empty">Check the indicators, then press Start.</p></section>';
-        return;
-      }
-      cards.innerHTML = rows.map(row => {
-        const book = row.book || {};
-        const side = row.active_side === "ce" ? "Long call" : row.active_side === "pe" ? "Long put" : "No position";
-        const unreal = book.unrealized_pnl;
-        const unrealText = unreal == null ? (book.open_symbol ? "—" : "0.00") : inr(unreal);
-        const stopLine = row.stop_price != null
-          ? `Stop if futures ${row.active_side === "ce" ? "falls to" : "rises to"} ${inr(row.stop_price)}`
-          : "No futures stop until a fill";
-        return `<section class="card">
-          <div class="headrow">
-            <div>
-              <h2>${escapeHtml(row.label || "Indicator")}</h2>
-              <div class="phase">${escapeHtml(row.phase || "")}</div>
-            </div>
-            <div class="label">Signal ${escapeHtml(row.live_signal || "—")}</div>
-          </div>
-          <div class="meta">
-            <span>Last signal ${escapeHtml(row.last_signal || "—")}</span>
-            <span>Warm-up ${row.warmup_bars || 0} bars</span>
-            <span>${escapeHtml(stopLine)}</span>
-          </div>
-          <div class="stats">
-            <div class="stat"><div class="label">Closed</div><div class="v ${pnlClass(Number(book.realized_pnl || 0))}">${inr(book.realized_pnl || 0)}</div></div>
-            <div class="stat"><div class="label">Open</div><div class="v ${pnlClass(Number(unreal || 0))}">${unrealText}</div></div>
-            <div class="stat"><div class="label">Total</div><div class="v ${pnlClass(Number(book.total_pnl || 0))}">${inr(book.total_pnl || 0)}</div></div>
-            <div class="stat"><div class="label">Position</div><div class="v">${side}</div></div>
-          </div>
-          <div class="scroll">
-            <table>
-              <thead><tr>
-                <th>#</th><th>Leg</th><th>Symbol</th><th>Qty</th>
-                <th>Entry</th><th>Entry time</th><th>Exit</th><th>Exit time</th>
-                <th>Profit</th><th>Running total</th>
-              </tr></thead>
-              <tbody>${tradeRows(book.trades || [])}</tbody>
-            </table>
-          </div>
-          ${row.error ? `<div class="msg err">${escapeHtml(row.error)}</div>` : ""}
-        </section>`;
-      }).join("");
-      cards.querySelectorAll(".scroll").forEach((el, i) => { el.scrollTop = prev[i] || 0; });
+      totalEl.className = moneyClass(combined);
+      setText(totalEl, inr(combined));
     }
 
     async function refresh() {
       const data = await api("/api/v1/paper/futures/status");
       if (data && data.ok) render(data.status || {});
     }
-
     async function startDesk() {
       const modes = checkedModes();
       if (!modes.length) {
@@ -335,7 +486,7 @@
         return;
       }
       document.getElementById("btnStart").disabled = true;
-      setMsg("Locking the Nifty spot strike…", true);
+      setMsg("Locking the Nifty spot strike.", true);
       try {
         const data = await api("/api/v1/paper/futures/start", {
           method: "POST",
@@ -349,13 +500,17 @@
       }
       await refresh();
     }
-
     async function stopDesk() {
       const data = await api("/api/v1/paper/futures/stop", { method: "POST", body: "{}" });
       setMsg(data.message || data.error || "Could not stop", !!data.ok);
       if (data.status) render(data.status);
       await refresh();
     }
+
+    document.getElementById("btnStart").addEventListener("click", startDesk);
+    document.getElementById("btnStop").addEventListener("click", stopDesk);
+    paintRail();
+    setInterval(paintRail, 30000);
 
     (async function init() {
       const listed = await api("/api/v1/paper/futures/indicators");
