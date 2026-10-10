@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Futures paper — NeoTV</title>
+  <style>
+    :root {
+      --bg: #f3f5f8;
+      --panel: #ffffff;
+      --text: #1c2430;
+      --muted: #5c6b7a;
+      --accent: #1d6fbf;
+      --accent-text: #ffffff;
+      --good: #0d8a4f;
+      --good-text: #ffffff;
+      --bad: #c23b42;
+      --bad-text: #ffffff;
+      --line: #d5dde6;
+      --nav: #e7eef6;
+      --pill: #e7eef6;
+      --pill-run: #e5f6ec;
+      --shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: "Segoe UI", system-ui, sans-serif;
+      background: var(--bg); color: var(--text); padding: 20px 22px 40px;
+    }
+    a { color: var(--accent); }
+    h1 { margin: 0 0 4px; font-size: 1.45rem; }
+    .sub { margin: 0; color: var(--muted); max-width: 640px; }
+    .pagehead { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+    .topnav { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .topnav a {
+      text-decoration: none; background: var(--nav); color: var(--text);
+      border: 1px solid var(--line); border-radius: 8px; padding: 8px 14px; font-weight: 600;
+    }
+    .topnav a.active { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+    .card {
+      background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+      padding: 16px; box-shadow: var(--shadow); margin-bottom: 14px;
+    }
+    .label { font-size: 0.75rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+    .checks { display: flex; gap: 16px; flex-wrap: wrap; margin: 10px 0 14px; }
+    .checks label { display: flex; gap: 8px; align-items: center; font-weight: 600; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    button {
+      border: 0; border-radius: 8px; padding: 9px 14px; font-weight: 700; cursor: pointer;
+    }
+    button.good { background: var(--good); color: var(--good-text); }
+    button.bad { background: var(--bad); color: var(--bad-text); }
+    button:disabled { opacity: 0.45; cursor: default; }
+    .msg { margin-top: 10px; min-height: 1.2em; }
+    .msg.ok { color: var(--good); }
+    .msg.err { color: var(--bad); }
+    .contract { display: flex; gap: 14px 22px; flex-wrap: wrap; align-items: baseline; }
+    .contract strong { font-size: 1rem; }
+    .pill {
+      display: inline-block; background: var(--pill); border-radius: 999px;
+      padding: 2px 8px; font-size: 0.78rem; font-weight: 700;
+    }
+    .pill.run { background: var(--pill-run); color: var(--good); }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } }
+    .headrow { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+    h2 { margin: 0; font-size: 1.15rem; }
+    .phase { margin: 6px 0 0; font-weight: 650; }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 12px 0; }
+    .stat { background: var(--bg); border-radius: 8px; padding: 8px 10px; }
+    .stat .v { font-size: 1.15rem; font-weight: 750; margin-top: 2px; }
+    .ok { color: var(--good); }
+    .badc { color: var(--bad); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+    th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    th { color: var(--muted); font-size: 0.72rem; letter-spacing: 0.03em; text-transform: uppercase; }
+    .empty { color: var(--muted); padding: 8px 0; }
+    .scroll { overflow: auto; }
+  </style>
+</head>
+<body>
+  <header class="pagehead">
+    <div>
+      <h1>Futures paper</h1>
+      <p class="sub">Several indicators on one Nifty spot strike. Each keeps its own trades and profit. Nothing is sent to a broker.</p>
+    </div>
+    <nav class="topnav">
+      <a href="/api/v1/auth/login">Log in with Zerodha</a>
+    </nav>
+  </header>
+
+  <section class="card">
+    <div class="label">Indicators</div>
+    <div class="checks" id="checks"></div>
+    <div class="actions">
+      <button type="button" class="good" id="btnStart" onclick="startDesk()">Start</button>
+      <button type="button" class="bad" id="btnStop" onclick="stopDesk()" disabled>Stop</button>
+    </div>
+    <div id="msg" class="msg"></div>
+  </section>
+
+  <section class="card">
+    <div class="contract">
+      <span class="pill" id="runPill">Stopped</span>
+      <span>Futures <strong id="futSym">—</strong></span>
+      <span>Spot <strong id="spot">—</strong></span>
+      <span>Strike <strong id="strike">—</strong></span>
+      <span>Call <strong id="ceSym">—</strong></span>
+      <span>Put <strong id="peSym">—</strong></span>
+    </div>
+  </section>
+
+  <div class="grid" id="cards"></div>
+
+  <script>
+    function inr(n) {
+      if (n == null || n === "" || Number.isNaN(Number(n))) return "—";
+      return Number(n).toFixed(2);
+    }
+    function pnlClass(n) {
+      if (n > 0) return "ok";
+      if (n < 0) return "badc";
+      return "";
+    }
+    function escapeHtml(s) {
+      return String(s || "").replace(/[&<>"']/g, c => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;"
+      }[c]));
+    }
+    function setMsg(text, ok) {
+      const el = document.getElementById("msg");
+      el.textContent = text || "";
+      el.className = "msg " + (ok === true ? "ok" : ok === false ? "err" : "");
+    }
+    function showLogin(text) {
+      setMsg(text || "Log in with Zerodha, then press Start.", false);
+    }
+    async function api(path, opts) {
+      const res = await fetch(path, {
+        headers: { "Content-Type": "application/json" },
+        ...(opts || {}),
+      });
+      let data = {};
+      try { data = await res.json(); } catch (e) { data = {}; }
+      if (res.status === 401) {
+        showLogin(typeof data.detail === "string" ? data.detail : "Log in with Zerodha");
+        return { ok: false, error: "Log in with Zerodha" };
+      }
+      return data;
+    }
+
+    function checkedModes() {
+      return [...document.querySelectorAll("#checks input:checked")].map(el => el.value);
+    }
+
+    function renderChecks(indicators, locked, selected) {
+      const box = document.getElementById("checks");
+      const chosen = new Set(selected && selected.length ? selected : indicators.map(row => row.id));
+      box.innerHTML = indicators.map(row => `<label>
+        <input type="checkbox" value="${escapeHtml(row.id)}" ${chosen.has(row.id) ? "checked" : ""} ${locked ? "disabled" : ""} />
+        ${escapeHtml(row.label)}
+      </label>`).join("");
+    }
+
+    function tradeRows(trades) {
+      if (!trades.length) {
+        return '<tr><td colspan="10" class="empty">No trades yet. Waiting for the first signal.</td></tr>';
+      }
+      return trades.slice().reverse().map(t => `<tr>
+        <td>${t.n ?? ""}</td>
+        <td>${escapeHtml(t.leg || "")}</td>
+        <td>${escapeHtml(t.symbol || "")}</td>
+        <td>${t.qty ?? ""}</td>
+        <td>${inr(t.entry_price)}</td>
+        <td>${escapeHtml(t.entry_at || "")}</td>
+        <td>${t.exit_price == null ? "—" : inr(t.exit_price)}</td>
+        <td>${escapeHtml(t.exit_at || "—")}</td>
+        <td class="${pnlClass(Number(t.pnl))}">${t.pnl == null ? "—" : inr(t.pnl)}</td>
+        <td class="${pnlClass(Number(t.running_total))}">${t.running_total == null ? "—" : inr(t.running_total)}</td>
+      </tr>`).join("");
+    }
+
+    function render(status) {
+      const s = status || {};
+      const atm = s.resolved_atm || {};
+      const running = !!s.running;
+      document.getElementById("runPill").textContent = running ? "Practicing" : "Stopped";
+      document.getElementById("runPill").className = "pill" + (running ? " run" : "");
+      document.getElementById("futSym").textContent = s.fut_symbol || "—";
+      document.getElementById("spot").textContent = atm.spot != null ? inr(atm.spot) : "—";
+      document.getElementById("strike").textContent = atm.strike != null ? atm.strike : "—";
+      document.getElementById("ceSym").textContent = s.ce_symbol || "—";
+      document.getElementById("peSym").textContent = s.pe_symbol || "—";
+      document.getElementById("btnStart").disabled = running;
+      document.getElementById("btnStop").disabled = !running;
+      if (running && (s.modes || []).length) {
+        const on = new Set(s.modes);
+        document.querySelectorAll("#checks input").forEach(el => {
+          el.checked = on.has(el.value);
+          el.disabled = true;
+        });
+      } else {
+        document.querySelectorAll("#checks input").forEach(el => { el.disabled = false; });
+      }
+
+      const cards = document.getElementById("cards");
+      const rows = s.indicators || [];
+      const prev = [...cards.querySelectorAll(".scroll")].map(el => el.scrollTop);
+      if (!rows.length) {
+        cards.innerHTML = '<section class="card"><p class="empty">Check the indicators, then press Start.</p></section>';
+        return;
+      }
+      cards.innerHTML = rows.map(row => {
+        const book = row.book || {};
+        const side = row.active_side === "ce" ? "Long call" : row.active_side === "pe" ? "Long put" : "No position";
+        const unreal = book.unrealized_pnl;
+        const unrealText = unreal == null ? (book.open_symbol ? "—" : "0.00") : inr(unreal);
+        return `<section class="card">
+          <div class="headrow">
+            <div>
+              <h2>${escapeHtml(row.label || "Indicator")}</h2>
+              <div class="phase">${escapeHtml(row.phase || "")}</div>
+            ${row.stop_price != null ? `<div class="label">Stop if futures ${row.active_side === "ce" ? "≤" : "≥"} ${inr(row.stop_price)}</div>` : ""}
+            </div>
+            <div class="label">Signal ${escapeHtml(row.live_signal || "—")}</div>
+          </div>
+          <div class="stats">
+            <div class="stat"><div class="label">Closed</div><div class="v ${pnlClass(Number(book.realized_pnl || 0))}">${inr(book.realized_pnl || 0)}</div></div>
+            <div class="stat"><div class="label">Open</div><div class="v ${pnlClass(Number(unreal || 0))}">${unrealText}</div></div>
+            <div class="stat"><div class="label">Total</div><div class="v ${pnlClass(Number(book.total_pnl || 0))}">${inr(book.total_pnl || 0)}</div></div>
+            <div class="stat"><div class="label">Position</div><div class="v">${side}</div></div>
+          </div>
+          <div class="scroll">
+            <table>
+              <thead><tr>
+                <th>#</th><th>Leg</th><th>Symbol</th><th>Qty</th>
+                <th>Entry</th><th>Entry time</th><th>Exit</th><th>Exit time</th>
+                <th>Profit</th><th>Running total</th>
+              </tr></thead>
+              <tbody>${tradeRows(book.trades || [])}</tbody>
+            </table>
+          </div>
+          ${row.error ? `<div class="msg err">${escapeHtml(row.error)}</div>` : ""}
+        </section>`;
+      }).join("");
+      cards.querySelectorAll(".scroll").forEach((el, i) => { el.scrollTop = prev[i] || 0; });
+    }
+
+    async function refresh() {
+      const data = await api("/api/v1/paper/futures/status");
+      if (data && data.ok) render(data.status || {});
+    }
+
+    async function startDesk() {
+      const modes = checkedModes();
+      if (!modes.length) {
+        setMsg("Check at least one indicator.", false);
+        return;
+      }
+      document.getElementById("btnStart").disabled = true;
+      setMsg("Locking the Nifty spot strike…", true);
+      try {
+        const data = await api("/api/v1/paper/futures/start", {
+          method: "POST",
+          body: JSON.stringify({ modes }),
+        });
+        setMsg(data.message || data.error || "Could not start", !!data.ok);
+        if (data.status) render(data.status);
+      } catch (e) {
+        setMsg("Could not start", false);
+        document.getElementById("btnStart").disabled = false;
+      }
+      await refresh();
+    }
+
+    async function stopDesk() {
+      const data = await api("/api/v1/paper/futures/stop", { method: "POST", body: "{}" });
+      setMsg(data.message || data.error || "Could not stop", !!data.ok);
+      if (data.status) render(data.status);
+      await refresh();
+    }
+
+    (async function init() {
+      const listed = await api("/api/v1/paper/futures/indicators");
+      const indicators = (listed && listed.indicators) || [
+        { id: "ut_bot_fut_cepe", label: "UT Bot" },
+        { id: "bxtrender_fut_cepe", label: "B-Xtrender" },
+      ];
+      renderChecks(indicators, false, indicators.map(row => row.id));
+      await refresh();
+      setInterval(refresh, 2000);
+    })();
+  </script>
+</body>
+</html>

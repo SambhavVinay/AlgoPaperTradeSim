@@ -1,0 +1,5 @@
+fastapi>=0.141.1
+uvicorn[standard]>=0.32.0
+kiteconnect>=5.0.1
+pydantic-settings>=2.0.0
+python-dotenv>=1.0.0
